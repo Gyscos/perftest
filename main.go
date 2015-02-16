@@ -61,9 +61,11 @@ func main() {
 	var n int
 	var forceAnalyze bool
 	var depth int
+	var threads int
 
 	flag.IntVar(&depth, "depth", 0, "Maximum depth to return in the times object. 0 for unlimited.")
 	flag.IntVar(&n, "n", 10, "Number of times to call each URL")
+	flag.IntVar(&threads, "threads", 1, "Number of parallel calls to make.")
 	flag.StringVar(&output, "o", "", "Output file. Blank for stdout.")
 	flag.StringVar(&host, "host", "http://localhost:8080", "Hostname")
 	flag.StringVar(&token, "token", "", "Token to use")
@@ -93,7 +95,7 @@ func main() {
 	}
 
 	tester := NewTester(host, token, w)
-	err = tester.Run(urls, n, forceAnalyze, depth)
+	err = tester.Run(urls, n, threads, forceAnalyze, depth)
 	if err != nil {
 		log.Println("Error during RUN:", err)
 	}

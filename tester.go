@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -24,23 +25,48 @@ func NewTester(host string, token string, w io.Writer) *Tester {
 	}
 }
 
-func (t *Tester) Run(queries []Query, n int, forceAnalyze bool, depth int) error {
+func (t *Tester) testUrlChannel(queries <-chan Query, tc chan<- QueryTime, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for q := range queries {
+		times, err := t.testUrl(q.api, q.url)
+		if err != nil {
+			log.Println("Error testing URL:", err)
+			continue
+		}
+		tc <- QueryTime{q.api, times}
+		time.Sleep(1 * time.Second)
+	}
+}
+
+func (t *Tester) Run(queries []Query, n int, threads int, forceAnalyze bool, depth int) error {
 	var apiTimes TimeSet = make(map[string]TimeSerie)
 	for i := 0; i < n; i++ {
 		log.Printf("-----   CYCLE %3v   -----\n", i)
-		for _, query := range queries {
-			api := query.api
-			if forceAnalyze {
-				api = "analyze"
-			}
-			times, err := t.testUrl(api, query.url)
-			if err != nil {
-				log.Println("Error testing URL:", err)
-				continue
-			}
-			apiTimes.Add(query.api, times)
-			time.Sleep(1 * time.Second)
+
+		var wg sync.WaitGroup
+		tc := make(chan QueryTime, 10)
+		qc := make(chan Query, 10)
+		for j := 0; j < threads; j++ {
+			wg.Add(1)
+			go t.testUrlChannel(qc, tc, &wg)
 		}
+
+		var wg2 sync.WaitGroup
+		wg2.Add(1)
+		go func() {
+			for t := range tc {
+				apiTimes.Add(t.api, t.times)
+			}
+			wg2.Done()
+		}()
+
+		for _, query := range queries {
+			qc <- query
+		}
+		close(qc)
+		wg.Wait()
+		close(tc)
+		wg2.Wait()
 	}
 
 	for api, times := range apiTimes {
