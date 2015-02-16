@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"sync"
@@ -15,13 +16,15 @@ type Tester struct {
 	host  string
 	token string
 	w     io.Writer
+	el    *log.Logger
 }
 
-func NewTester(host string, token string, w io.Writer) *Tester {
+func NewTester(host string, token string, w io.Writer, el *log.Logger) *Tester {
 	return &Tester{
 		host:  host,
 		token: token,
 		w:     w,
+		el:    el,
 	}
 }
 
@@ -89,15 +92,22 @@ func (t *Tester) testUrl(api string, targetURL string) (Times, error) {
 	}
 	defer resp.Body.Close()
 
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
 	var tr TimedResponse
-	dec := json.NewDecoder(resp.Body)
-	err = dec.Decode(&tr)
+	// dec := json.NewDecoder(resp.Body)
+	// err = dec.Decode(&tr)
+	err = json.Unmarshal(b, &tr)
 	if err != nil {
 		return nil, err
 	}
 	result := tr.GetTimes()
 	if result == nil {
-		return nil, errors.New("could not read time.")
+		t.el.Println("Error reading time from:", string(b))
+		return nil, errors.New("could not read time. Logged.")
 	}
 
 	return result, nil

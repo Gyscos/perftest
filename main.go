@@ -62,11 +62,13 @@ func main() {
 	var forceAnalyze bool
 	var depth int
 	var threads int
+	var errlog string
 
 	flag.IntVar(&depth, "depth", 0, "Maximum depth to return in the times object. 0 for unlimited.")
 	flag.IntVar(&n, "n", 10, "Number of times to call each URL")
 	flag.IntVar(&threads, "threads", 1, "Number of parallel calls to make.")
 	flag.StringVar(&output, "o", "", "Output file. Blank for stdout.")
+	flag.StringVar(&errlog, "err", "", "Error log file. Blank for stdout.")
 	flag.StringVar(&host, "host", "http://localhost:8080", "Hostname")
 	flag.StringVar(&token, "token", "", "Token to use")
 	flag.StringVar(&dataFile, "f", "urls.txt", "URL file to test")
@@ -84,6 +86,16 @@ func main() {
 		}
 	}
 
+	var errW io.Writer = os.Stdout
+	if errlog != "" {
+		f, err := os.Create(errlog)
+		if err == nil {
+			errW = f
+			defer f.Close()
+		}
+	}
+	errlogger := log.New(errW, "Error", log.LstdFlags)
+
 	urls, err := readUrls(dataFile)
 	if err != nil {
 		log.Fatal(err)
@@ -94,7 +106,7 @@ func main() {
 		urls = randomize(urls)
 	}
 
-	tester := NewTester(host, token, w)
+	tester := NewTester(host, token, w, errlogger)
 	err = tester.Run(urls, n, threads, forceAnalyze, depth)
 	if err != nil {
 		log.Println("Error during RUN:", err)
