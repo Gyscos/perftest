@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -26,6 +27,7 @@ func NewTester(host string, token string, w io.Writer) *Tester {
 func (t *Tester) Run(queries []Query, n int, forceAnalyze bool, depth int) error {
 	var apiTimes TimeSet = make(map[string]TimeSerie)
 	for i := 0; i < n; i++ {
+		log.Printf("-----   CYCLE %3v   -----\n", i)
 		for _, query := range queries {
 			api := query.api
 			if forceAnalyze {
@@ -35,14 +37,10 @@ func (t *Tester) Run(queries []Query, n int, forceAnalyze bool, depth int) error
 			if err != nil {
 				log.Println("Error testing URL:", err)
 				continue
-			} else if times == nil {
-				log.Println("Error getting times from URL!")
-				continue
 			}
 			apiTimes.Add(query.api, times)
 			time.Sleep(1 * time.Second)
 		}
-		log.Printf("----- CYCLE %3v -----\n", i)
 	}
 
 	for api, times := range apiTimes {
@@ -71,5 +69,10 @@ func (t *Tester) testUrl(api string, targetURL string) (Times, error) {
 	if err != nil {
 		return nil, err
 	}
-	return tr.GetTimes(), nil
+	result := tr.GetTimes()
+	if result == nil {
+		return nil, errors.New("could not read time.")
+	}
+
+	return result, nil
 }
