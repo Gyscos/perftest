@@ -83,7 +83,7 @@ func (t *Tester) Run(queries []Query, n int, threads int, forceAnalyze bool, dep
 }
 
 func (t *Tester) testUrl(api string, targetURL string) (Times, error) {
-	url := t.host + "/api/" + api + "?version=3&token=" + t.token + "&mentos&stats&admin&url=" + targetURL
+	url := t.host + "/api/" + api + "?version=3&token=" + t.token + "&mentos&stats&admin&timeout=50000&url=" + targetURL
 
 	log.Println(url)
 	resp, err := http.Get(url)
