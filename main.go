@@ -94,7 +94,7 @@ func main() {
 			defer f.Close()
 		}
 	}
-	errlogger := log.New(errW, "Error", log.LstdFlags)
+	errlogger := log.New(errW, "", log.LstdFlags)
 
 	urls, err := readUrls(dataFile)
 	if err != nil {
