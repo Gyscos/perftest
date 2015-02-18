@@ -35,7 +35,7 @@ func (t *Tester) Run(queries []Query, n int, threads int, forceAnalyze bool, dep
 	var apiTimes TimeSet = make(map[string]TimeSerie)
 
 	for i := 0; i < n; i++ {
-		log.Printf("-----   CYCLE %3v   -----\n", i)
+		log.Printf("-----   CYCLE %3v   -----\n", i+1)
 
 		// Fill the query channel
 		qc := make(chan urlspammer.Query, 20)
