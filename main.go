@@ -100,10 +100,10 @@ func main() {
 
 	bench.Conf["ForceAnalyze"] = fmt.Sprint(forceAnalyze)
 
-	bench.Subj["Threads"] = fmt.Sprint(threads)
-	bench.Subj["ThreadPerCPU"] = fmt.Sprint(threadsPerCPU)
-	bench.Subj["Host"] = benchHost
-	bench.Subj["Rev"] = benchRev
+	bench.Conf["Threads"] = fmt.Sprint(threads)
+	bench.Conf["ThreadPerCPU"] = fmt.Sprint(threadsPerCPU)
+	bench.Conf["Host"] = benchHost
+	bench.Conf["Rev"] = benchRev
 
 	b, err := json.Marshal(&bench)
 	if err != nil {
