@@ -2,8 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
-	"io"
 	"log"
 	"sync"
 	"time"
@@ -14,24 +12,21 @@ import (
 type Tester struct {
 	host  string
 	token string
-	w     io.Writer
 	el    *log.Logger
 }
 
-func NewTester(host string, token string, w io.Writer, el *log.Logger) *Tester {
+func NewTester(host string, token string, el *log.Logger) *Tester {
 	return &Tester{
 		host:  host,
 		token: token,
-		w:     w,
 		el:    el,
 	}
 }
 func (t *Tester) makeUrl(api string, target string) string {
-
 	return t.host + "/api/" + api + "?version=3&token=" + t.token + "&mentos&stats&admin&timeout=600000&url=" + target
 }
 
-func (t *Tester) Run(queries []Query, n int, threads int, forceAnalyze bool, depth int) error {
+func (t *Tester) Run(queries []Query, n int, threads int, forceAnalyze bool) (TimeSet, error) {
 	var apiTimes TimeSet = make(map[string]TimeSerie)
 
 	for i := 0; i < n; i++ {
@@ -90,15 +85,8 @@ func (t *Tester) Run(queries []Query, n int, threads int, forceAnalyze bool, dep
 
 		wg.Wait()
 		// All times have been compiled now
-
-	}
-
-	for api, times := range apiTimes {
-
-		// meanTime := times.Mean()
-		fmt.Fprintf(t.w, "API %v: %v\n", api, times.PrettyPrint(depth))
 	}
 
 	// Now, sum the component times for each call and url
-	return nil
+	return apiTimes, nil
 }
